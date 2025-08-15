@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:6.0
+    container_name: socialmedia-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: socialmedia
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - socialmedia-network
+
+  # Backend API Server
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: socialmedia-server
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGODB_CONNECTION=mongodb://admin:password123@mongodb:27017/socialmedia?authSource=admin
+      - JWTKEY=your_jwt_secret_key_here
+      - PORT=5000
+      - NODE_ENV=production
+    volumes:
+      - ./server/public:/app/public
+    depends_on:
+      - mongodb
+    networks:
+      - socialmedia-network
+
+  # Socket.io Server
+  socket:
+    build:
+      context: ./socket
+      dockerfile: Dockerfile
+    container_name: socialmedia-socket
+    restart: unless-stopped
+    ports:
+      - "8800:8800"
+    depends_on:
+      - server
+    networks:
+      - socialmedia-network
+
+  # Frontend Client
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: socialmedia-client
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_PUBLIC_FOLDER=http://localhost:5000/images/
+    depends_on:
+      - server
+      - socket
+    networks:
+      - socialmedia-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  socialmedia-network:
+    driver: bridge

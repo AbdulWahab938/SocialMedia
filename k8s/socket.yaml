@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: socket
+  namespace: socialmedia
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: socket
+  template:
+    metadata:
+      labels:
+        app: socket
+    spec:
+      containers:
+      - name: socket
+        image: socialmedia-socket:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8800
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: socket-service
+  namespace: socialmedia
+spec:
+  selector:
+    app: socket
+  ports:
+  - port: 8800
+    targetPort: 8800
+  type: ClusterIP

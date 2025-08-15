@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: socialmedia-config
+  namespace: socialmedia
+data:
+  REACT_APP_PUBLIC_FOLDER: "http://localhost:5000/images/"
+  NODE_ENV: "production"
+  PORT: "5000"
+  SOCKET_PORT: "8800"
